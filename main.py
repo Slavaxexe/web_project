@@ -25,23 +25,29 @@ pygame.display.flip()
 running = True
 while running:
     for event in pygame.event.get():
-        if event.key != None:
+        if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                d -= m / 5
+                d -= m / 3
             if event.key == pygame.K_RIGHT:
-                d -= m / 5
+                d += m / 3
             if event.key == pygame.K_UP:
-                s += m / 5
+                s += m / 3
             if event.key == pygame.K_DOWN:
-                s -= m / 5
+                s -= m / 3
             map_request = f"http://static-maps.yandex.ru/1.x/?ll={d},{s}&spn={m},{m}&l=map"
             response = requests.get(map_request)
             map_file = "map.png"
             with open(map_file, "wb") as file:
                 file.write(response.content)
+            if not response:
+                print("Ошибка выполнения запроса:")
+                print(map_request)
+                print("Http статус:", response.status_code, "(", response.reason, ")")
+                sys.exit(1)
             screen.blit(pygame.image.load(map_file), (0, 0))
-        if event.type == pygame.QUIT:
+        elif event.type == pygame.QUIT:
             running = False
+    pygame.display.flip()
 
 pygame.quit()
 os.remove(map_file)
