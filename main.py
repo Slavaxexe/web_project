@@ -38,5 +38,4 @@ while pygame.event.wait().type != pygame.QUIT:
     pass
 pygame.quit()
 
-
 os.remove(map_file)
