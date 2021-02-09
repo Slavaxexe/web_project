@@ -23,15 +23,8 @@ screen = pygame.display.set_mode((600, 450))
 screen.blit(pygame.image.load(map_file), (0, 0))
 pygame.display.flip()
 running = True
-while running:
-    for event in pygame.event.get():
-        if event.key != None:
-            1
-            1
-            1
-            1
-            1
-            1
+
+
 
 
 
