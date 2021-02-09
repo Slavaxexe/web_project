@@ -26,6 +26,13 @@ running = True
 while running:
     for event in pygame.event.get():
         if event.key != None:
+            1
+            1
+            1
+            1
+            1
+            1
+
 
 
 pygame.quit()
