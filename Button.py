@@ -30,4 +30,3 @@ class Button:
 
     def change_color(self, color, screen):
         self.color = color
-        self.draw_button(screen)
