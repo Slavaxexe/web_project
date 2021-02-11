@@ -22,8 +22,6 @@ pygame.init()
 screen = pygame.display.set_mode((600, 450))
 screen.blit(pygame.image.load(map_file), (0, 0))
 pygame.display.flip()
-mashtab = 0.005
-new_m = m
 running = True
 while running:
     for event in pygame.event.get():
@@ -32,10 +30,11 @@ while running:
         if event.type == pygame.KEYDOWN:
             last_s = s
             last_d = d
+            last_m = m
             if event.key == pygame.K_PAGEUP:
-                new_m = m - mashtab
+                m *= 2
             if event.key == pygame.K_PAGEDOWN:
-                new_m = m + mashtab
+                m /=  2
             if event.key == pygame.K_LEFT:
                 d -= m / 3
             if event.key == pygame.K_RIGHT:
@@ -44,17 +43,18 @@ while running:
                 s += m / 3
             if event.key == pygame.K_DOWN:
                 s -= m / 3
-            map_request = f"http://static-maps.yandex.ru/1.x/?ll={d},{s}&spn={new_m},{new_m}&l=map"
+            map_request = f"http://static-maps.yandex.ru/1.x/?ll={d},{s}&spn={m},{m}&l=map"
             response = requests.get(map_request)
             map_file = "map.png"
             if not response:
+                m = last_m
+                d = last_d
+                s = last_s
                 print('Ошибка выполения запроса')
             else:
-                m = new_m
                 with open(map_file, "wb") as file:
                     file.write(response.content)
-    screen.blit(pygame.image.load(map_file), (0, 0))
+                screen.blit(pygame.image.load(map_file), (0, 0))
     pygame.display.flip()
-    screen.fill((0, 0, 0))
 pygame.quit()
 os.remove(map_file)
