@@ -35,7 +35,7 @@ def find_place(text_1):
     response_1 = requests.get(geocoder_request)
     if not response_1:
         print("Ошибка выполнения запроса3")
-        return 0, 0, "Null"
+        return 0, 0, "Null", "No postal code"
     else:
         try:
             response_json = response_1.json()
@@ -45,10 +45,17 @@ def find_place(text_1):
             place = response_json["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"][
                 "metaDataProperty"][
                 "GeocoderMetaData"]["text"]
+            try:
+                postal_code_func = " " + response_json["response"]["GeoObjectCollection"]["featureMember"][0][
+                    "GeoObject"][
+                    "metaDataProperty"][
+                    "GeocoderMetaData"]["Address"]["postal_code"]
+            except KeyError:
+                postal_code_func = " No postal code"
         except IndexError:
             print("Ошибка выполнения запроса2")
-            return 0, 0, "Null"
-    return float(cords.split()[0]), float(cords.split()[1]), place
+            return 0, 0, "Null", "No postal code"
+    return float(cords.split()[0]), float(cords.split()[1]), place, postal_code_func
 
 
 # Type of the map
@@ -62,6 +69,9 @@ m = float(input())
 # Last time for scrolling
 last_time = time()
 now_sim = 0
+# Is postal code showing
+postal_code_show = False
+postal_code = ""
 pygame.init()
 
 screen = pygame.display.set_mode((600, 550))
@@ -74,20 +84,21 @@ text = "Moscow"
 txt_surface = font.render(text, True, (0, 0, 0))
 input_box_2 = pygame.Rect(300, 50, 200, 50)
 pygame.draw.rect(screen, (0, 0, 0), input_box_2, 1)
-text_2 = ""
-text_place = font.render(text_2, True, (0, 0, 0))
-text_2_enter = text_2
+info_text = ""
+text_place = font.render(info_text, True, (0, 0, 0))
+info_text_show = info_text
 # UI - Buttons
 find = Button(500, 0, 100, 50, (255, 255, 255), "Enter", (0, 0, 0), 20)
 remove = Button(500, 50, 100, 50, (255, 255, 255), "Remove", (0, 0, 0), 20)
 schema = Button(0, 0, 100, 50, (150, 150, 150), "Схема", (0, 0, 0), 20)
 satellite = Button(100, 0, 100, 50, (255, 255, 255), "Спутник", (0, 0, 0), 20)
 hybrid = Button(200, 0, 100, 50, (255, 255, 255), "Гибрид", (0, 0, 0), 20)
+postal_code_button = Button(200, 50, 100, 50, (255, 255, 255), "Индекс", (0, 0, 0), 20)
 pygame.display.flip()
 running = True
 # First request
 search = "Moscow"
-d, s, _ = find_place(search)
+d, s, _, _ = find_place(search)
 map_request = f"http://static-maps.yandex.ru/1.x/?ll={d},{s}&spn={m},{m}&l=map"
 response = requests.get(map_request)
 map_file = "map.png"
@@ -110,34 +121,52 @@ while running:
                 active = False
             # Set mode schema
             if schema.pressed(event.pos):
-                schema.change_color((150, 150, 150), screen)
-                satellite.change_color((255, 255, 255), screen)
-                hybrid.change_color((255, 255, 255), screen)
+                schema.change_color((150, 150, 150))
+                satellite.change_color((255, 255, 255))
+                hybrid.change_color((255, 255, 255))
                 now_type = "map"
             # Set mode satellite
             elif satellite.pressed(event.pos):
-                schema.change_color((255, 255, 255), screen)
-                satellite.change_color((150, 150, 150), screen)
-                hybrid.change_color((255, 255, 255), screen)
+                schema.change_color((255, 255, 255))
+                satellite.change_color((150, 150, 150))
+                hybrid.change_color((255, 255, 255))
                 now_type = "sat"
             # Set mode hybrid
             elif hybrid.pressed(event.pos):
-                hybrid.change_color((150, 150, 150), screen)
-                satellite.change_color((255, 255, 255), screen)
-                schema.change_color((255, 255, 255), screen)
+                hybrid.change_color((150, 150, 150))
+                satellite.change_color((255, 255, 255))
+                schema.change_color((255, 255, 255))
                 now_type = "sat,skl"
             # Find new place and make a point
             elif find.pressed(event.pos):
-                d, s, text_2 = find_place(text)
-                text_2 = "     " + text_2
-                text_2_enter = text_2
+                d, s, info_text, postal_code = find_place(text)
+                info_text = "     " + info_text
+                if postal_code_show:
+                    info_text += postal_code
+                info_text_show = info_text
                 now_sim = 0
                 if d != 0 and s != 0 and [str(d), str(s)] not in pts:
                     pts.append([str(d), str(s)])
+            # Remove all points
             elif remove.pressed(event.pos):
                 pts = []
-                text_2 = ""
-                text_2_enter = ""
+                info_text = ""
+                info_text_show = ""
+            # Show postal code or not
+            elif postal_code_button.pressed(event.pos):
+                postal_code_show = not postal_code_show
+                if postal_code_show:
+                    info_text += postal_code
+                    postal_code_button.change_color((150, 150, 150))
+                else:
+                    # If no postal code
+                    if "No postal code" in info_text:
+                        info_text = info_text[0:-15]
+                        info_text_show = info_text
+                    else:
+                        info_text = info_text[0:-7]
+                        info_text_show = info_text
+                    postal_code_button.change_color((255, 255, 255))
             # Reload if not tap on change-text window
             if not input_box.collidepoint(event.pos):
                 reload(m, d, s, now_type, pts)
@@ -148,9 +177,11 @@ while running:
             if active:
                 # Enter a value, add new point
                 if event.key == pygame.K_RETURN:
-                    d, s, text_2 = find_place(text)
-                    text_2 = "     " + text_2
-                    text_2_enter = text_2
+                    d, s, info_text, postal_code = find_place(text)
+                    info_text = "     " + info_text
+                    info_text_show = info_text
+                    if postal_code_show:
+                        info_text += postal_code
                     now_sim = 0
                     if d != 0 and s != 0 and [str(d), str(s)] not in pts:
                         pts.append([str(d), str(s)])
@@ -184,14 +215,14 @@ while running:
                     s = last_s
                     m = last_m
                     d = last_d
-    #show_all_text
-    if time() - last_time > 0.1 and len(text_2) > 19:
+    # Show_all_text
+    if time() - last_time > 0.1 and len(info_text) > 19:
         last_time = time()
-        if now_sim != len(text_2):
+        if now_sim != len(info_text):
             now_sim += 1
         else:
             now_sim = 0
-        text_2_enter = text_2[now_sim:now_sim + 19]
+        info_text_show = info_text[now_sim:now_sim + 19]
     # Fill screen
     screen.fill((255, 255, 255))
     # Show a map
@@ -202,12 +233,13 @@ while running:
     schema.draw_button(screen)
     satellite.draw_button(screen)
     hybrid.draw_button(screen)
+    postal_code_button.draw_button(screen)
     # Reload input text
     pygame.draw.rect(screen, (0, 0, 0), input_box, 1)
     txt_surface = font.render(text, True, (0, 0, 0))
     screen.blit(txt_surface, (input_box.x + 20, input_box.y + 20))
     pygame.draw.rect(screen, (0, 0, 0), input_box_2, 1)
-    text_place = font.render(text_2_enter, True, (0, 0, 0))
+    text_place = font.render(info_text_show, True, (0, 0, 0))
     screen.blit(text_place, (input_box_2.x + 10, input_box_2.y + 20))
     # Yeah flippy-bottle challenge!!!
     pygame.display.flip()

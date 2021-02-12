@@ -28,5 +28,5 @@ class Button:
             return True
         return False
 
-    def change_color(self, color, screen):
+    def change_color(self, color):
         self.color = color
