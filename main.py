@@ -29,9 +29,10 @@ def reload(m_1, d_1, s_1, map_type, points):
 
 
 # find place by name
-def find_place(text_1):
+def find_place(cords):
     geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&" \
-                       f"geocode={text_1}&format=json"
+                       f"geocode={cords}&format=json"
+
     response_1 = requests.get(geocoder_request)
     if not response_1:
         print("Ошибка выполнения запроса3")
@@ -62,6 +63,7 @@ def find_place(text_1):
 now_type = "map"
 # All points
 pts = []
+now_point = []
 # Can we write&
 active = False
 # Scale
@@ -94,6 +96,7 @@ schema = Button(0, 0, 100, 50, (150, 150, 150), "Схема", (0, 0, 0), 20)
 satellite = Button(100, 0, 100, 50, (255, 255, 255), "Спутник", (0, 0, 0), 20)
 hybrid = Button(200, 0, 100, 50, (255, 255, 255), "Гибрид", (0, 0, 0), 20)
 postal_code_button = Button(200, 50, 100, 50, (255, 255, 255), "Индекс", (0, 0, 0), 20)
+next_place = Button(0, 50, 100, 50, (255, 255, 255), "Следующее", (0, 0, 0), 20)
 pygame.display.flip()
 running = True
 # First request
@@ -147,6 +150,7 @@ while running:
                 now_sim = 0
                 if d != 0 and s != 0 and [str(d), str(s)] not in pts:
                     pts.append([str(d), str(s)])
+                    now_point = [str(d), str(s)]
             # Remove all points
             elif remove.pressed(event.pos):
                 pts = []
@@ -167,6 +171,13 @@ while running:
                         info_text = info_text[0:-7]
                         info_text_show = info_text
                     postal_code_button.change_color((255, 255, 255))
+            elif next_place.pressed(event.pos) and len(pts) > 1:
+                index_next = pts.index(now_point) - 1
+                if index_next == -1:
+                    index_next = len(pts) - 1
+                d, s, info_text, postal_code = find_place(pts[index_next][0] + "," + pts[index_next][1])
+                now_point = [str(d), str(s)]
+                pts[index_next] = [str(d), str(s)]
             # Reload if not tap on change-text window
             if not input_box.collidepoint(event.pos):
                 reload(m, d, s, now_type, pts)
@@ -185,6 +196,7 @@ while running:
                     now_sim = 0
                     if d != 0 and s != 0 and [str(d), str(s)] not in pts:
                         pts.append([str(d), str(s)])
+                        now_point = [str(d), str(s)]
                     active = False
                 # Remove last symbol
                 elif event.key == pygame.K_BACKSPACE:
@@ -234,6 +246,7 @@ while running:
     satellite.draw_button(screen)
     hybrid.draw_button(screen)
     postal_code_button.draw_button(screen)
+    next_place.draw_button(screen)
     # Reload input text
     pygame.draw.rect(screen, (0, 0, 0), input_box, 1)
     txt_surface = font.render(text, True, (0, 0, 0))
