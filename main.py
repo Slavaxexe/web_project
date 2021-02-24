@@ -67,7 +67,7 @@ now_point = []
 # Can we write&
 active = False
 # Scale
-m = float(input())
+m = 1
 # Last time for scrolling
 last_time = time()
 now_sim = 0
@@ -117,6 +117,11 @@ while running:
             running = False
         # Mouse events
         if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 3:
+                right_position = list(event.pos)
+                right_position[0] -= 300
+                right_position[1] -= 325
+                print(right_position, s, d, m)
             # Enter a text
             if input_box.collidepoint(event.pos):
                 active = True
