@@ -22,6 +22,7 @@ def reload(m_1, d_1, s_1, map_type, points):
     resp = requests.get(map_req)
     map_f = "map.png"
     if not resp:
+        print("error")
         return False
     with open(map_f, "wb") as file_1:
         file_1.write(resp.content)
@@ -68,6 +69,7 @@ now_point = []
 active = False
 # Scale
 m = 1
+kf = 0.825
 # Last time for scrolling
 last_time = time()
 now_sim = 0
@@ -121,7 +123,20 @@ while running:
                 right_position = list(event.pos)
                 right_position[0] -= 300
                 right_position[1] -= 325
-                print(right_position, s, d, m)
+                req = str(d + right_position[0] * (2 * m * 0.825 / 300)) + "," + str(
+                    s - right_position[1] * (m * 0.7 / 225))
+                _, _, info_text, postal_code = find_place(req)
+                text = str(round(float(req.split(",")[0]), 3)) + "," + str(round(float(req.split(",")[1]), 3))
+                d_mid = d + right_position[0] * (2 * m * 0.825 / 300)
+                s_mid = s - right_position[1] * (m * 0.7 / 225)
+                info_text = "     " + info_text
+                if postal_code_show:
+                    info_text += postal_code
+                info_text_show = info_text
+                now_sim = 0
+                if d_mid != 0 and s_mid != 0 and [str(d_mid), str(s_mid)] not in pts:
+                    pts.append([str(d_mid), str(s_mid)])
+                    now_point = [str(d_mid), str(s_mid)]
             # Enter a text
             if input_box.collidepoint(event.pos):
                 active = True
