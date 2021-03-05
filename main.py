@@ -30,9 +30,9 @@ def reload(m_1, d_1, s_1, map_type, points):
 
 
 # find place by name
-def find_place(cords):
+def find_place(cords, plus=""):
     geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&" \
-                       f"geocode={cords}&format=json"
+                       f"geocode={cords}&format=json{plus}"
 
     response_1 = requests.get(geocoder_request)
     if not response_1:
@@ -125,7 +125,9 @@ while running:
                 right_position[1] -= 325
                 req = str(d + right_position[0] * (2 * m * 0.825 / 300)) + "," + str(
                     s - right_position[1] * (m * 0.7 / 225))
-                _, _, info_text, postal_code = find_place(req)
+                m_mid = m / 100000
+                box = str(s - m_mid) + ',' + str(d - m_mid) + "~" + str(s + m_mid) + ',' + str(d + m_mid)
+                _, _, info_text, postal_code = find_place(req, f"&bbox={box}")
                 text = str(round(float(req.split(",")[0]), 3)) + "," + str(round(float(req.split(",")[1]), 3))
                 d_mid = d + right_position[0] * (2 * m * 0.825 / 300)
                 s_mid = s - right_position[1] * (m * 0.7 / 225)
